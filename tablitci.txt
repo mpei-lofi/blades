@@ -1,0 +1,4 @@
+VerticalTabl - изначальная полная таблица
+test1 - таблица VerticalTabl без путсых ячеек
+profili - профили по углам alfa0 и alfa1
+testSparamerami - таблица с параметрами геометрии
