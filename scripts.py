@@ -128,16 +128,13 @@ def FindCamberPoints(spline_suction,spline_pressure,count=20,eps=1e-5,border=0.0
         count : int (numbers of inscribed circles)
         """
         ds = spline_suction.derivative(nu=1)
-        dds = spline_suction.derivative(nu=2)
         dp = spline_pressure.derivative(nu=1)
-        ddp = spline_pressure.derivative(nu=2)
         # Профиль предварительно отмасштабирован 
         lb = leftborderX + border
         rb = rightborder - border
         step = abs(lb-rb)/(count-1)
         x = np.arange(leftborderX+border,(rightborder-border)+step,step)
-        ds_set = ds(x)
-        dds_set = dds(x)
+        # Перавая итерация
         result_data = []
         for i in x:
                 X = [0.5,0.2,0.5] # начальное приблежение покачто нужно контролировать в ручную
@@ -145,7 +142,6 @@ def FindCamberPoints(spline_suction,spline_pressure,count=20,eps=1e-5,border=0.0
                         x1 = i
                         y1 = float(spline_suction(i))
                         k1 = float(ds(i))
-                        b1 = y1 - k1*x1
                         kr = -1/k1
                         br = y1-kr*x1
                         xr = X[0]
@@ -153,7 +149,6 @@ def FindCamberPoints(spline_suction,spline_pressure,count=20,eps=1e-5,border=0.0
                         x2 = X[2]
                         y2 = float(spline_pressure(x2))
                         k2 = float(dp(x2))
-                        b2 = y2-k2*x2
                         kr2 = -1/k2
                         br2 = y2 - kr2*x2
                         p1 = Vertex(x1,y1)
@@ -166,9 +161,13 @@ def FindCamberPoints(spline_suction,spline_pressure,count=20,eps=1e-5,border=0.0
                         ]
                 sol = scipy.optimize.root(function,X,method='hybr',tol=eps)
                 print(sol.x,'   ',sol.success)
-                if sol.success and sol.x[1]<float(spline_suction(i)):
+                if (sol.success and sol.x[0]<=rightborder and sol.x[0]>=leftborderX
+                and sol.x[1]<max(spline_suction(np.arange(0,1,0.01)))
+                and sol.x[1]>min(spline_pressure(np.arange(0,1,0.01)))):
                         result_data.append(sol.x)
+        
         return result_data
+
 
                         
 from scipy.spatial.distance import cdist

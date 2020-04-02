@@ -1,5 +1,6 @@
 from scripts import *
 from tkinter import *
+import operator
 from tkinter import filedialog as fd
 import numpy as np
 import os
@@ -11,18 +12,18 @@ from statistics import median
 # ss - suction side
 
 #### reading data block ####
-filename = fd.askopenfilename()
-# filename = r'W:\Geometry\С-9012А\С-9012Авог.txt'
+# filename = fd.askopenfilename()
+filename = r'D:\home\Git\blades\Geometry\С-9012А\С-9012Авог.txt'
 points_ps = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
-filename = fd.askopenfilename()
-# filename = r'W:\Geometry\С-9012А\C-9012Асп.txt'
+# filename = fd.askopenfilename()
+filename = r'D:\home\Git\blades\Geometry\С-9012А\C-9012Асп.txt'
 points_ss = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
-# filename = r'W:\Geometry\С-9012А\С-9012Агеом.txt'
 if median(points_ps[1])>median(points_ss[1]):
     temp = points_ps
     points_ps = points_ss
     points_ss = temp
-filename = fd.askopenfilename()
+# filename = fd.askopenfilename()
+filename = r'D:\home\Git\blades\Geometry\С-9012А\С-9012Агеом.txt'
 CHORD,INSTALL_ANGLE,PITCH,R_INLET,R_OUTLET = np.loadtxt(filename,skiprows=1,usecols=(0,1,2,3,4))
 inletEdgePoints = np.vstack((points_ps[0][0:3],points_ps[1][0:3]))
 result_inlet = FitInletEdge(inletEdgePoints[0],inletEdgePoints[1])
@@ -37,23 +38,22 @@ points_ps = scaling(points_ps,1.0,R_INLET,R_OUTLET,CHORD)
 points_ss = scaling(points_ss,1.0,R_INLET,R_OUTLET,CHORD)
 spline_ps = getSplineFromPoints(points_ps)
 spline_ss = getSplineFromPoints(points_ss)
-
+leftBorderSS = points_ss[0][0]
+rightBorderSS = points_ss[0][-1]
 # detecting r_max,xr_max and camber line
-res = FindCamberPoints(spline_ss,spline_ps,count=100,eps=1e-3,border=0.01,rightborder=1.0,leftborderX=0.0)
+res = FindCamberPoints(spline_ss,spline_ps,count=50,eps=1e-3,border=0.01,rightborder=rightBorderSS,leftborderX=leftBorderSS)
 radius_array = [Vertex(res[i][0],res[i][1]).length(Vertex(res[i][2],float(spline_ps(res[i][2])))) for i in range(0,len(res))]
 xr_array  =[i[0] for i in res]
-points_rDistrub = [(xr_array[i],radius_array[i]) for i in range(0,len(radius_array))]
-sorting(points_rDistrub,0)
-points_rDistrub = np.transpose(points_rDistrub)
-spline_rDisturb = getSplineFromPoints(points_rDistrub)
 r_max = np.max(radius_array)
 xr_max = float(np.transpose(res)[0][np.where(radius_array == r_max)])
 yr_max = float(np.transpose(res)[1][np.where(radius_array == r_max)])
 points_camber = [(i[0],i[1]) for i in res]
+print('not sorted', points_camber)
 points_camber.insert(0,(0,0))
 points_camber.append((1,0))
+points_camber = sorted(points_camber,key=operator.itemgetter(0))
+print(points_camber)
 spline_camber = getSplineFromPoints(np.transpose(points_camber))
-
 #### detecting x_max, y_max
 points_camber = np.transpose([(x,float(spline_camber(x))) for x in np.arange(0,1,0.001)])
 y_max = np.max(points_camber[1])
