@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 from scipy.optimize import minimize
 import scipy
-from vertex import *
+from lofi_geometry_lib import *
 def Writing(fileName,data):
         fileName = fileName+'_PARAMETRS.txt'
         file = open(fileName,'w')

@@ -6,18 +6,29 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from statistics import median
+from fit_fun import fittingCircles
 
 #### MAIN ####
 # ps - pressure side
 # ss - suction side
 
 #### reading data block ####
+<<<<<<< Updated upstream
 # filename = fd.askopenfilename()
 filename = r'D:\home\Git\blades\Geometry\С-9012А\С-9012Авог.txt'
 points_ps = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
 # filename = fd.askopenfilename()
 filename = r'D:\home\Git\blades\Geometry\С-9012А\C-9012Асп.txt'
 points_ss = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
+=======
+filename = fd.askopenfilename()
+# filename = os.getcwd() + r'\Geometry\С-9012А\С-9012Авог.txt'
+points_ps = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
+filename = fd.askopenfilename()
+# filename = os.getcwd() + r'\Geometry\С-9012А\C-9012Асп.txt'
+points_ss = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
+# filename = os.getcwd() + r'\Geometry\С-9012А\С-9012Агеом.txt'
+>>>>>>> Stashed changes
 if median(points_ps[1])>median(points_ss[1]):
     temp = points_ps
     points_ps = points_ss
@@ -41,9 +52,17 @@ spline_ss = getSplineFromPoints(points_ss)
 leftBorderSS = points_ss[0][0]
 rightBorderSS = points_ss[0][-1]
 # detecting r_max,xr_max and camber line
+<<<<<<< Updated upstream
 res = FindCamberPoints(spline_ss,spline_ps,count=50,eps=1e-3,border=0.01,rightborder=rightBorderSS,leftborderX=leftBorderSS)
 radius_array = [Vertex(res[i][0],res[i][1]).length(Vertex(res[i][2],float(spline_ps(res[i][2])))) for i in range(0,len(res))]
 xr_array  =[i[0] for i in res]
+=======
+# res = FindCamberPoints(spline_ss,spline_ps,count=100,eps=1e-3,border=0.01,rightborder=1.0,leftborderX=0.0)
+res = fittingCircles(spline_ss,spline_ps,left_x=0.0 + 0.1,right_x=1.0 - 0.1,step_x=0.01)
+# radius_array = [Vertex(res[i][0],res[i][1]).length(Vertex(res[i][2],float(spline_ps(res[i][2])))) for i in range(0,len(res))]
+radius_array = res[:,2]
+
+>>>>>>> Stashed changes
 r_max = np.max(radius_array)
 xr_max = float(np.transpose(res)[0][np.where(radius_array == r_max)])
 yr_max = float(np.transpose(res)[1][np.where(radius_array == r_max)])
@@ -51,8 +70,12 @@ points_camber = [(i[0],i[1]) for i in res]
 print('not sorted', points_camber)
 points_camber.insert(0,(0,0))
 points_camber.append((1,0))
+<<<<<<< Updated upstream
 points_camber = sorted(points_camber,key=operator.itemgetter(0))
 print(points_camber)
+=======
+points_camber = sorted(points_camber)
+>>>>>>> Stashed changes
 spline_camber = getSplineFromPoints(np.transpose(points_camber))
 #### detecting x_max, y_max
 points_camber = np.transpose([(x,float(spline_camber(x))) for x in np.arange(0,1,0.001)])
@@ -124,6 +147,7 @@ PARAMETRS = {
 
 plt.figure()
 ax = plt.gca()
+plt.axis('equal')
 
 #### Добавление окружностей на график ####
 InletEdge = plt.Circle((0.0, 0.0), r_inlet, fill=False)
