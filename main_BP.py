@@ -1,5 +1,5 @@
-from scripts import *
-from tkinter import *
+import scripts
+import tkinter
 import operator
 from tkinter import filedialog as fd
 import numpy as np
@@ -7,6 +7,10 @@ import os
 import matplotlib.pyplot as plt
 from statistics import median
 from fit_fun import fittingCircles
+from scripts import FindBend, FindPoint, FindTrailingEdgePoints, FitInletEdge, getLineKB, getSplineFromPoints, scaling
+from lofi_geometry_lib import Vector, Vertex
+import scipy as sp
+import math
 
 #### MAIN ####
 # ps - pressure side
@@ -96,7 +100,7 @@ k_bend = -1/dt_bend
 b_bend = bend_point.y - k_bend*bend_point.x
 f = lambda x : k_bend*x+b_bend - float(spline_camber(x))
 x0 = 0.5
-xr_bend = float(scipy.optimize.root(f,x0).x)
+xr_bend = float(sp.optimize.root(f,x0).x)
 BendPoint = Vertex(xr_bend,float(spline_camber(xr_bend)))
 RBend = BendPoint.length(bend_point)
 dt_camber = float(spline_camber.derivative(nu=1)(BendPoint.x))
