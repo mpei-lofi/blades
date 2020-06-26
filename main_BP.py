@@ -11,27 +11,49 @@ from scripts import FindBend, FindPoint, FindTrailingEdgePoints, FitInletEdge, g
 from lofi_geometry_lib import Vector, Vertex
 import scipy as sp
 import math
-
+from readingBladesDatabase import ReadBladeDB
+import requests
+import io
+import pandas as pd
 #### MAIN ####
 # ps - pressure side
 # ss - suction side
 
 #### reading data block ####
 # filename = fd.askopenfilename()
-cdir = os.getcwd()
-filename = cdir + r'\Geometry\С-6035А\С-6035Авог.txt'
-points_ps = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
-# filename = fd.askopenfilename()
-filename = cdir + r'\Geometry\С-6035А\С-6035Асп.txt'
-points_ss = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
-filename = cdir + r'\Geometry\С-6035А\С-6035Агеом.txt'
-if median(points_ps[1])>median(points_ss[1]):
-    temp = points_ps
-    points_ps = points_ss
-    points_ss = temp
-# filename = fd.askopenfilename()
-CHORD,INSTALL_ANGLE,PITCH,R_INLET,R_OUTLET = np.loadtxt(filename,skiprows=1,usecols=(0,1,2,3,4))
-inletEdgePoints = np.vstack((points_ps[0][0:3],points_ps[1][0:3]))
+
+data_local = r'E:\Work Roman\Git\blades\AtlasData.xlsx'
+blade_name = r'С9015А'
+blade = ReadBladeDB(data_local,blade_name)
+X,YSS,YPS = blade['X'].values,blade['Yсп'].values,blade['Yвог'].values
+points_ps = np.array([[X[i],YPS[i]] for i in np.arange(0,len(X))])
+points_ss = np.array([[X[i],YSS[i]] for i in np.arange(0,len(X))])
+print(points_ps)
+print(points_ss)
+get_value =  lambda key: float(blade[key].dropna().values)
+CHORD = get_value(r'Хорда')
+INSTALL_ANGLE = get_value(r'Угол Установки')
+PITCH = get_value(r'Шаг')
+R_INLET = get_value(r'R вход')
+R_OUTLET = get_value(r'R выход')
+print(CHORD)
+print(PITCH)
+print(R_INLET)
+print(R_OUTLET)
+print(INSTALL_ANGLE)
+# cdir = os.getcwd()
+# filename = cdir + r'\Geometry\С-6035А\С-6035Авог.txt'
+# points_ps = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
+# # filename = fd.askopenfilename()
+# filename = cdir + r'\Geometry\С-6035А\С-6035Асп.txt'
+# points_ss = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
+# filename = cdir + r'\Geometry\С-6035А\С-6035Агеом.txt'
+# if median(points_ps[1])>median(points_ss[1]):
+#     temp = points_ps
+#     points_ps = points_ss
+#     points_ss = temp
+# # filename = fd.askopenfilename()
+inletEdgePoints = np.vstack((points_ps[:3],points_ss[:3]))
 result_inlet = FitInletEdge(inletEdgePoints[0],inletEdgePoints[1])
 R_INLET = result_inlet[2]
 scalefactor = 1.0/(CHORD - R_INLET - R_OUTLET)
