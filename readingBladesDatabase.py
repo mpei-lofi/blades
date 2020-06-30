@@ -1,6 +1,13 @@
 import pandas as pd
 
 def ReadBladeDB(filename, blade_name = 'All', array_format = False):
+    """
+    filename - имя файла. Адрес файла ..AtlasData.xlsx
+
+    blade_name - имя лопатки. Каждой лопатке соответствует свой лист в exel файле. All - считываются все лопатки.
+
+    array_format - формат вывода, если true - вывод в виде numpy.array, иначе pandas.DataBase
+    """
     file = pd.ExcelFile(filename)
     bladeData = pd.read_excel(filename,sheet_name=None,header=0)
     result = 'Здесь ничего нет, проверь все ещё раз'

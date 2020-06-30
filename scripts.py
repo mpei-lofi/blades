@@ -50,11 +50,30 @@ def sorting(matrix,raw=0):
                 matrix[raw][i],matrix[raw][i+1] = matrix[raw][i+1],matrix[raw][i]
                 matrix[j][i],matrix[j][i+1] = matrix[j][i+1],matrix[j][i]
         n += 1
+# def scaling(data,b=1.0,r1=0,r2=0, B=50):
+#         p1 = Vertex(r1,r1)
+#         p2 = Vertex(B-r2,r2)
+#         angle = math.atan2(p1.y-p2.y,p2.x-p1.x)
+#         vertexArray = [Vertex(data[0][i],data[1][i]) for i in range(len(data[0]))]
+#         vectorMove = getVectorFromPoints(Vertex(r1,r1),Vertex(0,0))
+#         vertexArray = [i.move(vectorMove) for i in vertexArray]
+#         data = np.transpose([[i.x,i.y] for i in vertexArray])
+
+#         rotationMatrix = np.array([
+#                 [math.cos(angle),math.sin(angle)],
+#                 [-math.sin(angle),math.cos(angle)]
+#         ])
+#         sf = 1
+#         scaleFactor = sf/(B-r1-r2)
+#         a = np.transpose(data)
+#         b = [i@rotationMatrix for i in a]
+#         c = np.transpose(b)
+#         return [i*scaleFactor for i in c]
 def scaling(data,b=1.0,r1=0,r2=0, B=50):
         p1 = Vertex(r1,r1)
         p2 = Vertex(B-r2,r2)
         angle = math.atan2(p1.y-p2.y,p2.x-p1.x)
-        vertexArray = [Vertex(data[0][i],data[1][i]) for i in range(len(data[0]))]
+        vertexArray = [Vertex(data[i,0],data[i,1]) for i in np.arange(len(data))]
         vectorMove = getVectorFromPoints(Vertex(r1,r1),Vertex(0,0))
         vertexArray = [i.move(vectorMove) for i in vertexArray]
         data = np.transpose([[i.x,i.y] for i in vertexArray])

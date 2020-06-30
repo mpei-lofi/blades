@@ -23,39 +23,24 @@ import pandas as pd
 # filename = fd.askopenfilename()
 
 data_local = r'E:\Work Roman\Git\blades\AtlasData.xlsx'
-blade_name = r'С9015А'
+blade_name = r'С7025А'
 blade = ReadBladeDB(data_local,blade_name)
-X,YSS,YPS = blade['X'].values,blade['Yсп'].values,blade['Yвог'].values
-points_ps = np.array([[X[i],YPS[i]] for i in np.arange(0,len(X))])
-points_ss = np.array([[X[i],YSS[i]] for i in np.arange(0,len(X))])
-print(points_ps)
-print(points_ss)
-get_value =  lambda key: float(blade[key].dropna().values)
-CHORD = get_value(r'Хорда')
-INSTALL_ANGLE = get_value(r'Угол Установки')
-PITCH = get_value(r'Шаг')
-R_INLET = get_value(r'R вход')
-R_OUTLET = get_value(r'R выход')
-print(CHORD)
-print(PITCH)
-print(R_INLET)
-print(R_OUTLET)
-print(INSTALL_ANGLE)
-# cdir = os.getcwd()
-# filename = cdir + r'\Geometry\С-6035А\С-6035Авог.txt'
-# points_ps = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
-# # filename = fd.askopenfilename()
-# filename = cdir + r'\Geometry\С-6035А\С-6035Асп.txt'
-# points_ss = np.transpose(np.loadtxt(filename,skiprows=1,usecols=(0,1)))
-# filename = cdir + r'\Geometry\С-6035А\С-6035Агеом.txt'
-# if median(points_ps[1])>median(points_ss[1]):
-#     temp = points_ps
-#     points_ps = points_ss
-#     points_ss = temp
-# # filename = fd.askopenfilename()
-inletEdgePoints = np.vstack((points_ps[:3],points_ss[:3]))
-result_inlet = FitInletEdge(inletEdgePoints[0],inletEdgePoints[1])
-R_INLET = result_inlet[2]
+GetValue =  lambda key: float(blade[key].dropna().values) if blade[key].dropna().values else None
+X,YSS,YPS = blade[r'X'].values,blade[r'Yсп'].values,blade[r'Yвог'].values
+points_ps = np.array([[x,y] for x,y in zip(X,YPS)])
+points_ss = np.array([[x,y] for x,y in zip(X,YSS)])
+CHORD = GetValue(r'Хорда')
+INSTALL_ANGLE = GetValue(r'Угол Установки')
+PITCH = GetValue(r'Шаг')
+R_INLET = GetValue(r'R вход')
+R_OUTLET = GetValue(r'R выход')
+
+print(points_ps, points_ss, CHORD, PITCH, R_INLET, R_OUTLET, INSTALL_ANGLE, sep='\n')
+
+if not R_INLET:
+    inletEdgePoints = np.vstack((points_ps[:3],points_ss[:3]))
+    result_inlet = FitInletEdge(inletEdgePoints[0],inletEdgePoints[1])
+    R_INLET = result_inlet[2]
 scalefactor = 1.0/(CHORD - R_INLET - R_OUTLET)
 chord = CHORD * scalefactor
 pitch = PITCH * scalefactor
@@ -92,13 +77,16 @@ W1 = FindPoint(spline_ps,r_inlet)
 angle = lambda x: math.degrees(math.atan(x)) if math.atan(x)>0 else math.degrees(math.atan(x)+math.pi/2.0)
 
 # omega1= 2 * (angle(spline_camber.derivative(nu=1)(0.0))-angle(spline_ps.derivative(nu=1)(W1.x)))
-k = spline_camber.derivative(nu=1)(0.0)
-k_temp,b_temp=getLineKB(Vertex(0.0,0.0),W1)
-omega1= 2 * (angle(spline_camber.derivative(nu=1)(0.0))-angle(k_temp))
+
+# ОГРОМНЫЙ КОСЯК В ОПРЕДЕЛЕНИИ ОМЕГА 1
+k = float(spline_camber.derivative(nu=1)(0.0))
+k_temp, b_temp = getLineKB(Vertex(0.0,0.0),W1)
+k2 = float(-1.0/k_temp)
+b2 = W1.y - k2*W1.x
+omega1 = 2 * (angle(k) - angle(k2))
+if omega1 < 0.0: omega1 = 0.0 # ЧТОБЫ ОМЕГА 1 НЕ БЫЛА ОТРИЦАТЕЛЬНОЙ
+
 print(spline_ps.derivative(nu=1)(W1.x))
-# k2 = spline_ps.derivative(nu=1)(W1.x)
-k2 = -1.0/k_temp
-b2 = W1.y-k2*W1.x
 rorate = lambda a : [[math.cos(a),math.sin(a)],[-math.sin(a),math.cos(a)]]
 rotation_angle = (90.0-omega1/2.0)*2.0
 rMatrix = rorate(math.radians(rotation_angle))
