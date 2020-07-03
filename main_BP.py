@@ -7,7 +7,7 @@ import os
 import matplotlib.pyplot as plt
 from statistics import median
 from fit_fun import fittingCircles
-from scripts import FindBend, FindPoint, FindTrailingEdgePoints, FitInletEdge, getLineKB, getSplineFromPoints, scaling
+from scripts import *
 from lofi_geometry_lib import Vector, Vertex
 import scipy as sp
 import math
@@ -47,27 +47,21 @@ pitch = PITCH * scalefactor
 r_inlet = R_INLET * scalefactor
 r_outlet = R_OUTLET * scalefactor
 #### data postprocessing ####
-points_ps = scaling(points_ps,1.0,R_INLET,R_OUTLET,CHORD)
-points_ss = scaling(points_ss,1.0,R_INLET,R_OUTLET,CHORD)
+points_ps, points_ss = transform(points_ps,points_ss,R_INLET,R_OUTLET)
 spline_ps = getSplineFromPoints(points_ps)
 spline_ss = getSplineFromPoints(points_ss)
-leftBorderSS = points_ss[0][0]
-rightBorderSS = points_ss[0][-1]
+leftBorderSS, rightBorderSS = min(points_ss[:,0]),max(points_ss[:,0])
 # detecting r_max,xr_max and camber line
 res = fittingCircles(spline_ss,spline_ps,left_x=0.0 + 0.1,right_x=1.0 - 0.1,step_x=0.01)
 radius_array = res[:,2]
-
 r_max = np.max(radius_array)
 xr_max = float(np.transpose(res)[0][np.where(radius_array == r_max)])
 yr_max = float(np.transpose(res)[1][np.where(radius_array == r_max)])
-points_camber = [(i[0],i[1]) for i in res]
-print('not sorted', points_camber)
-points_camber.insert(0,(0,0))
-points_camber.append((1,0))
-points_camber = sorted(points_camber)
-spline_camber = getSplineFromPoints(np.transpose(points_camber))
+# print('not sorted', points_camber)
+points_camber = np.vstack(([0,0], [[point[0],point[1]] for point in res], [1,0]))
+spline_camber = getSplineFromPoints(points_camber)
 #### detecting x_max, y_max
-points_camber = np.transpose([(x,float(spline_camber(x))) for x in np.arange(0,1,0.001)])
+points_camber = np.array([[x,float(spline_camber(x))] for x in np.arange(0,1,0.01)])
 y_max = np.max(points_camber[1])
 x_max = float(points_camber[0][np.where(points_camber[1] == y_max)])
 
@@ -156,9 +150,9 @@ for i in range(len(res)):
         (res[i][0], res[i][1]), radius_array[i], fill=False, color='green', ls='--'))
 
 
-plt.scatter(points_ps[0], points_ps[1], color='red',
+plt.scatter(points_ps[:,0], points_ps[:,1], color='red',
             marker='+')  # Цетр входной кромки
-plt.scatter(points_ss[0], points_ss[1], color='blue',
+plt.scatter(points_ss[:,0], points_ss[:,1], color='blue',
             marker='+')  # Центр выходной кромки
 plt.scatter(xr_max, yr_max, color='black', marker='+')  # Центр R MAX
 
@@ -172,7 +166,7 @@ plt.scatter(p2up.x,p2up.y,color ='black',marker ='o')
 plt.scatter(p2down.x,p2down.y,color ='black',marker ='o')
 plt.plot((-0.1,0.0),(k*-0.1,k*0.0))
 plt.plot((-0.1,W1.x),(k2*-0.1+b2,W1.y))
-plt.scatter(points_camber[0],points_camber[1])
+plt.scatter(points_camber[:,0],points_camber[:,1])
 plt.show()
 print(k,k2,b2)
 print(PARAMETRS)

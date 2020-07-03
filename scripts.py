@@ -50,44 +50,28 @@ def sorting(matrix,raw=0):
                 matrix[raw][i],matrix[raw][i+1] = matrix[raw][i+1],matrix[raw][i]
                 matrix[j][i],matrix[j][i+1] = matrix[j][i+1],matrix[j][i]
         n += 1
-# def scaling(data,b=1.0,r1=0,r2=0, B=50):
-#         p1 = Vertex(r1,r1)
-#         p2 = Vertex(B-r2,r2)
-#         angle = math.atan2(p1.y-p2.y,p2.x-p1.x)
-#         vertexArray = [Vertex(data[0][i],data[1][i]) for i in range(len(data[0]))]
-#         vectorMove = getVectorFromPoints(Vertex(r1,r1),Vertex(0,0))
-#         vertexArray = [i.move(vectorMove) for i in vertexArray]
-#         data = np.transpose([[i.x,i.y] for i in vertexArray])
 
-#         rotationMatrix = np.array([
-#                 [math.cos(angle),math.sin(angle)],
-#                 [-math.sin(angle),math.cos(angle)]
-#         ])
-#         sf = 1
-#         scaleFactor = sf/(B-r1-r2)
-#         a = np.transpose(data)
-#         b = [i@rotationMatrix for i in a]
-#         c = np.transpose(b)
-#         return [i*scaleFactor for i in c]
-def scaling(data,b=1.0,r1=0,r2=0, B=50):
+def transform(points_ps, points_ss, r1, r2, clockwise = False):
+        data = np.vstack((points_ps,points_ss))
+        #поворот
+        xMax, xMin = np.max(data[:,0]),np.min(data[:,0])
         p1 = Vertex(r1,r1)
-        p2 = Vertex(B-r2,r2)
+        p2 = Vertex(xMax-r2,r2)
         angle = math.atan2(p1.y-p2.y,p2.x-p1.x)
-        vertexArray = [Vertex(data[i,0],data[i,1]) for i in np.arange(len(data))]
-        vectorMove = getVectorFromPoints(Vertex(r1,r1),Vertex(0,0))
-        vertexArray = [i.move(vectorMove) for i in vertexArray]
-        data = np.transpose([[i.x,i.y] for i in vertexArray])
-
+        direction = -1.0 if clockwise else 1.0
         rotationMatrix = np.array([
-                [math.cos(angle),math.sin(angle)],
-                [-math.sin(angle),math.cos(angle)]
+                [math.cos(angle),direction*math.sin(angle)],
+                [-direction*math.sin(angle),math.cos(angle)]
         ])
-        sf = 1
-        scaleFactor = sf/(B-r1-r2)
-        a = np.transpose(data)
-        b = [i@rotationMatrix for i in a]
-        c = np.transpose(b)
-        return [i*scaleFactor for i in c]
+        data = data@rotationMatrix
+        #перемещение
+        moveVector = [-p1.x,-p1.y]
+        data = data[:] + moveVector
+        #масштабирование
+        scalefactor = 1.0/(abs(xMax-xMin)-r1-r2)
+        data = data*scalefactor
+        points_ps,points_ss = np.split(data,2)
+        return points_ps,points_ss
 def read(fileName):
         data = Reading(fileName)
         xy = np.array(data)
@@ -129,10 +113,8 @@ def half_divide_method(a, b, f):
         x = (a + b) / 2
         a, b = (a, x) if f(a) * f(x) < 0 else (x, b)
     return (a + b) / 2    
-def getSplineFromPoints(pointsArray):
-        # data = sorting([pointsArray[0],pointsArray[1]]) ##сортировка не нужна
-        data = pointsArray
-        tck = interpolate.splrep(data[0],data[1],k=2)
+def getSplineFromPoints(points):
+        tck = interpolate.splrep(points[:,0],points[:,1],k=2)
         spline = interpolate.BSpline(tck[0],tck[1],tck[2])
         return spline
 def FindCamberPoints(spline_suction,spline_pressure,count=20,eps=1e-5,border=0.01,leftborderX=0.0,rightborder=1.0):
